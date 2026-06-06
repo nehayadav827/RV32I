@@ -1,30 +1,35 @@
-module data_memory(
-    input  wire        clk,
-    input  wire        memread,
-    input  wire        memwrite,
-    input  wire [31:0] address,
-    input  wire [31:0] write_data,
-    output reg  [31:0] read_data
+module data_memory #(
+    parameter M = 256,  // Number of memory locations
+    parameter N = 32,  // 32-bit each 
+    parameter ADDR_WIDTH = $clog2(M)    // = 8 for 256 locations
+)(
+    input  wire clk,
+    input  wire memread,    
+    input  wire memwrite,   
+    input  wire [31:0] address,     
+    input  wire [N-1:0] write_data,  
+    output reg  [N-1:0] read_data  
 );
- 
-    // 256 memory locations, each 32 bits wide
-    // Total = 256 x 4 bytes = 1KB
-    reg [31:0] memory [0:255];
- 
-    // Write - sequential, on rising clock edge
-    always @(posedge clk) 
+
+    // Memory array: 256 locations x 32 bits = 1KB
+    reg [N-1:0] memory [0:M-1];
+
+    wire [ADDR_WIDTH-1:0] mem_addr;
+    assign mem_addr = address[ADDR_WIDTH+1:2];
+
+    // Synchronous write on rising clock edge
+    always @(posedge clk)
     begin
         if (memwrite)
-            memory[address[31:2]] <= write_data;
+            memory[mem_addr] <= write_data;
     end
- 
-    // Read - combinational, instant
-    always @(*) 
+
+    // Asynchronous read, output 0 when memread is low
+    always @(*)
     begin
         if (memread)
-            read_data = memory[address[31:2]];
+            read_data = memory[mem_addr];
         else
-            read_data = 32'b0;
+            read_data = {N{1'b0}};
     end
- 
 endmodule
