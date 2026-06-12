@@ -1,3 +1,17 @@
+// Inputs:
+//   clk - Clock signal
+//   memread - Read enable (from Control Unit)
+//   memwrite - Write enable (from Control Unit)
+//   address[31:0] - Byte address from ALU result
+//   write_data[N-1:0] - Data from Register File rd2
+//
+// Outputs:
+//   read_data[N-1:0]  - Data to MemToReg MUX
+//
+// Parameters:
+//   M = 256    - Number of memory locations
+//   N = 32     - Bits per location (confirmed for RV32I)
+//   ADDR_WIDTH - Auto derived as $clog2(M) = 8
 module data_memory #(
     parameter M = 256,  // Number of memory locations
     parameter N = 32,  // 32-bit each 
