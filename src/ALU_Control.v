@@ -52,3 +52,7 @@ module ALU_Control(
         default: alu_op = ALU_ADD;
         
     endcase
+    
+    end
+    
+endmodule
