@@ -1,5 +1,4 @@
 module Branch_Jump_Unit (
-    input clk, 
     input rst, 
     input jump,
     input jalr,
@@ -29,7 +28,7 @@ module Branch_Jump_Unit (
         .brh_taken(brh_flag)
     );
 
-    always @(posedge clk)begin
+    always @(*)begin
         if(rst) begin
             pc_out <= 32'h00000000;
             link_addr <= 32'h00000000;
