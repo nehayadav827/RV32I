@@ -15,7 +15,7 @@ module rv32i_top(
     
     wire [31:0] alu_result;      // for ALU
     wire alu_zero;
-    wire [31:0] alu_B;
+    wire [31:0] alu_B,alu_A;
     wire [1:0] ALUOp;
     wire [3:0] alu_op;
     
@@ -28,6 +28,7 @@ module rv32i_top(
     //control signals
     wire RegWrite,MemRead,MemWrite,MemToReg,ALUSrc,Branch,Jump,Jalr;
     wire [4:0] rs1_addr,rs2_addr,rd_addr;
+    wire [1:0] ALUSrcA;
     
     //branch signals
     wire brh_taken,jump_taken;
@@ -46,7 +47,7 @@ module rv32i_top(
 
     //control unit instantiation
     control_unit control_unit_block(.opcode(opcode),.funct3(funct3),.funct7(funct7),.RegWrite(RegWrite),.MemRead(MemRead)
-                        ,.MemWrite(MemWrite),.MemToReg(MemToReg),.ALUSrc(ALUSrc),.Branch(Branch),.Jump(Jump),.Jalr(Jalr),.ALUOp(ALUOp),.imm_sel(imm_sel));
+                        ,.MemWrite(MemWrite),.MemToReg(MemToReg),.ALUSrc(ALUSrc),.ALUSrcA(ALUSrcA) ,.Branch(Branch),.Jump(Jump),.Jalr(Jalr),.ALUOp(ALUOp),.imm_sel(imm_sel));
 
     //Immediate generator instantion
     imm_generator imm_gen_block(.instruction(instruction),.imm_sel(imm_sel),.immediate(immediate));
@@ -58,11 +59,16 @@ module rv32i_top(
     //ALU Control Instantiation
     ALU_Control alu_control_unit(.ALUOp(ALUOp),.funct3(funct3),.funct7(funct7),.alu_op(alu_op));
     
+    //Mux logic for lui and auipc
+     assign alu_A = (ALUSrcA == 2'b00) ? rs1_data :
+                    (ALUSrcA == 2'b01) ? pc :
+                    (ALUSrcA == 2'b10) ? 32'd0 : 32'd0;
+    
     //ALUSrc MUX logic
     assign alu_B = (ALUSrc)? (immediate):(rs2_data) ;
     
     //ALU instantiation
-    ALU alu_block(.A(rs1_data),.B(alu_B),.alu_op(alu_op),.result(alu_result),.zero(alu_zero));
+    ALU alu_block(.A(alu_A),.B(alu_B),.alu_op(alu_op),.result(alu_result),.zero(alu_zero));
     
     //data memory instantiation
     data_memory dmem_block(.clk(clk),.memread(MemRead),.memwrite(MemWrite),.address(alu_result),.write_data(rs2_data),.read_data(mem_read_data));
@@ -74,7 +80,7 @@ module rv32i_top(
     //assign next_pc = pc + 4;
     
     //Branch/Jump unit
-    Branch_Jump_Unit branch_block(.clk(clk),.rst(rst),.jump(Jump),.jalr(Jalr),.brh(Branch),.func_b(funct3),.src_reg_1(rs1_data),.src_reg_2(rs2_data)
+    Branch_Jump_Unit branch_block(.rst(rst),.jump(Jump),.jalr(Jalr),.brh(Branch),.func_b(funct3),.src_reg_1(rs1_data),.src_reg_2(rs2_data)
                                     ,.imm(immediate),.pc_in(pc),.pc_out(next_pc),.link_addr(link_addr),.brh_taken(brh_taken),.jump_taken(jump_taken));
     
 endmodule
