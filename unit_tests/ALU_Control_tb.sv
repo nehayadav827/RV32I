@@ -1,6 +1,6 @@
 module ALU_Control_tb();
 
-logic [1:0] ALU_op;
+logic [1:0] ALUOp;
 logic [2:0] funct3;
 logic [6:0] funct7;
 
@@ -18,7 +18,7 @@ logic [3:0] alu_op;
     parameter ALU_SRL = 4'b1000;
     parameter ALU_SRA = 4'b1001;
 
-ALU_Control alu_control_block(.ALU_op(ALU_op),.funct3(funct3),.funct7(funct7),.alu_op(alu_op));
+ALU_Control alu_control_block(.ALUOp(ALUOp),.funct3(funct3),.funct7(funct7),.alu_op(alu_op));
 
 int pass_count;
 int fail_count;
@@ -32,7 +32,7 @@ task apply_inputs(
     );
     
     begin
-        ALU_op = ALU_op_in;
+        ALUOp = ALU_op_in;
         funct3 = funct3_in;
         funct7 = funct7_in;
         #1;
