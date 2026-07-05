@@ -1,3 +1,4 @@
+
 module rv32i_top(
     input clk,
     input rst
@@ -71,7 +72,7 @@ module rv32i_top(
     ALU alu_block(.A(alu_A),.B(alu_B),.alu_op(alu_op),.result(alu_result),.zero(alu_zero));
     
     //data memory instantiation
-    data_memory dmem_block(.clk(clk),.memread(MemRead),.memwrite(MemWrite),.address(alu_result),.write_data(rs2_data),.read_data(mem_read_data));
+    data_memory dmem_block(.clk(clk),.memread(MemRead),.memwrite(MemWrite),.funct3(funct3),.address(alu_result),.write_data(rs2_data),.read_data(mem_read_data));
     
     //writeback logic
     assign write_back_data = (Jump || Jalr) ? link_addr : (MemToReg) ? mem_read_data : alu_result;
