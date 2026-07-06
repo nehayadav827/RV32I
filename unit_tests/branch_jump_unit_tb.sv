@@ -1,6 +1,5 @@
-module Branch_Jump_Unit_tb();
+module Branch_Jump_Unit_tb;
 
-logic clk;
 logic rst;
 logic jump;
 logic jalr;
@@ -17,15 +16,14 @@ logic [31:0] link_addr;
 logic brh_taken;
 logic jump_taken;
 
-parameter BEQ  = 3'b000;
-parameter BNE  = 3'b001;
-parameter BLT  = 3'b100;
-parameter BGE  = 3'b101;
-parameter BLTU = 3'b110;
-parameter BGEU = 3'b111;
+localparam BEQ  = 3'b000;
+localparam BNE  = 3'b001;
+localparam BLT  = 3'b100;
+localparam BGE  = 3'b101;
+localparam BLTU = 3'b110;
+localparam BGEU = 3'b111;
 
-Branch_Jump_Unit x(
-    .clk(clk),
+Branch_Jump_Unit dut(
     .rst(rst),
     .jump(jump),
     .jalr(jalr),
@@ -41,157 +39,173 @@ Branch_Jump_Unit x(
     .jump_taken(jump_taken)
 );
 
-int pass_count;
-int fail_count;
-int test_count;
+integer tests  = 0;
+integer passed = 0;
 
-always #5 clk = ~clk;
-
-task apply_inputs(
-    input rst_in,
-    input jump_in,
-    input jalr_in,
-    input brh_in,
-    input [2:0] func_b_in,
-    input [31:0] rs1_in,
-    input [31:0] rs2_in,
-    input [31:0] imm_in,
-    input [31:0] pc_in_val
+task run_test(
+    input string name,
+    input rst_i,
+    input jump_i,
+    input jalr_i,
+    input brh_i,
+    input [2:0] func_i,
+    input [31:0] rs1_i,
+    input [31:0] rs2_i,
+    input [31:0] imm_i,
+    input [31:0] pc_i,
+    input [31:0] exp_pc,
+    input [31:0] exp_link,
+    input exp_brh,
+    input exp_jump
 );
+
 begin
-    rst       = rst_in;
-    jump      = jump_in;
-    jalr      = jalr_in;
-    brh       = brh_in;
-    func_b    = func_b_in;
-    src_reg_1 = rs1_in;
-    src_reg_2 = rs2_in;
-    imm       = imm_in;
-    pc_in     = pc_in_val;
-    @(posedge clk);
+    rst       = rst_i;
+    jump      = jump_i;
+    jalr      = jalr_i;
+    brh       = brh_i;
+    func_b    = func_i;
+    src_reg_1 = rs1_i;
+    src_reg_2 = rs2_i;
+    imm       = imm_i;
+    pc_in     = pc_i;
+
     #1;
-end
-endtask
 
-task check_results(
-    input string test_name,
-    input [31:0] expected_pc,
-    input [31:0] expected_link,
-    input expected_brh_taken,
-    input expected_jump_taken
-);
-begin
-    test_count++;
+    tests++;
 
-    if((pc_out == expected_pc) &&
-       (link_addr == expected_link) &&
-       (brh_taken == expected_brh_taken) &&
-       (jump_taken == expected_jump_taken))
+    if (pc_out      == exp_pc &&
+        link_addr   == exp_link &&
+        brh_taken   == exp_brh &&
+        jump_taken  == exp_jump)
     begin
-        pass_count++;
-        $display("[PASS] %s", test_name);
+        passed++;
+        $display("[PASS] %s", name);
     end
     else begin
-        fail_count++;
-        $display("[FAIL] %s", test_name);
-        $display("Expected: pc_out=%h link_addr=%h brh_taken=%b jump_taken=%b",
-                 expected_pc, expected_link,
-                 expected_brh_taken, expected_jump_taken);
-        $display("Actual  : pc_out=%h link_addr=%h brh_taken=%b jump_taken=%b",
-                 pc_out, link_addr,
-                 brh_taken, jump_taken);
+        $display("[FAIL] %s", name);
+        $display(" Expected : pc=%h link=%h brh=%b jump=%b", exp_pc, exp_link, exp_brh, exp_jump);
+        $display(" Got      : pc=%h link=%h brh=%b jump=%b", pc_out, link_addr, brh_taken, jump_taken);
     end
 end
+
 endtask
 
 initial begin
 
-    clk = 0;
+// Reset
+run_test("RESET",1,0,0,0,0,0,0,0,0,32'h00000000,32'h00000000,0,0);
 
-    apply_inputs(1,0,0,0,3'b000,0,0,0,0);
-    check_results("RESET",32'h00000000,32'h00000000,0,0);
+// Sequential PC
+run_test("PC+4",0,0,0,0,0,0,0,0,32'd100,32'd104,32'd0,0,0);
 
-    apply_inputs(0,0,0,0,3'b000,0,0,0,32'd100);
-    check_results("PC_INCREMENT",32'd104,32'h00000000,0,0);
+// JAL
+run_test("JAL",0,1,0,0,0,0,0,32'd20,32'd100,32'd120,32'd104,0,1);
 
-    apply_inputs(0,1,0,0,3'b000,0,0,32'd20,32'd100);
-    check_results("JAL",32'd120,32'd104,0,1);
+// JAL Backward
+run_test("JAL Backward",0,1,0,0,0,0,0,-32'd40,32'd100,32'd60,32'd104,0,1);
 
-    apply_inputs(0,0,1,0,3'b000,32'd200,0,32'd12,32'd100);
-    check_results("JALR",32'd212,32'd104,0,1);
+// JALR
+run_test("JALR",0,0,1,0,0,32'd200,0,32'd12,32'd100,32'd212,32'd104,0,1);
 
-    apply_inputs(0,0,0,1,BEQ,32'd10,32'd10,32'd16,32'd100);
-    check_results("BEQ_TAKEN",32'd116,32'd104,1,0);
+// JALR Alignment
+run_test("JALR Alignment",0,0,1,0,0,32'd101,0,32'd2,32'd100,32'd102,32'd104,0,1);
 
-    apply_inputs(0,0,0,1,BEQ,32'd10,32'd20,32'd16,32'd100);
-    check_results("BEQ_NOT_TAKEN",32'd104,32'd104,0,0);
+// BEQ Taken
+run_test("BEQ Taken",0,0,0,1,BEQ,10,10,16,100,116,0,1,0);
 
-    apply_inputs(0,0,0,1,BNE,32'd10,32'd20,32'd12,32'd100);
-    check_results("BNE_TAKEN",32'd112,32'd104,1,0);
+// BEQ Not Taken
+run_test("BEQ Not Taken",0,0,0,1,BEQ,10,20,16,100,104,0,0,0);
 
-    apply_inputs(0,0,0,1,BLT,-32'd5,32'd10,32'd8,32'd100);
-    check_results("BLT_TAKEN",32'd108,32'd104,1,0);
+// BNE Taken
+run_test("BNE Taken",0,0,0,1,BNE,10,20,12,100,112,0,1,0);
 
-    apply_inputs(0,0,0,1,BGE,32'd20,32'd10,32'd8,32'd100);
-    check_results("BGE_TAKEN",32'd108,32'd104,1,0);
+// BLT Taken
+run_test("BLT Taken",0,0,0,1,BLT,-5,10,8,100,108,0,1,0);
 
-    apply_inputs(0,0,0,1,BLTU,32'd5,32'd10,32'd24,32'd100);
-    check_results("BLTU_TAKEN",32'd124,32'd104,1,0);
+// BGE Taken
+run_test("BGE Taken",0,0,0,1,BGE,20,10,8,100,108,0,1,0);
 
-    apply_inputs(0,0,0,1,BGEU,32'd20,32'd10,32'd24,32'd100);
-    check_results("BGEU_TAKEN",32'd124,32'd104,1,0);
+// BLTU Taken
+run_test("BLTU Taken",0,0,0,1,BLTU,5,10,24,100,124,0,1,0);
 
-    apply_inputs(0,0,0,1,3'b111,32'd1,32'd2,32'd16,32'd100);
-    check_results("INVALID_BRANCH",32'd104,32'd104,0,0);
+// BGEU Taken
+run_test("BGEU Taken",0,0,0,1,BGEU,20,10,24,100,124,0,1,0);
 
-    apply_inputs(0,0,0,1,BEQ,32'd5,32'd5,32'h7FFFFFFC,32'd100);
-    check_results("BEQ_MAX_POS_OFFSET",32'h80000060,32'd104,1,0);
+// Negative Offset Branch
+run_test("Negative Branch",0,0,0,1,BEQ,5,5,-20,100,80,0,1,0);
 
-    apply_inputs(0,0,0,1,BEQ,32'd10,32'd10,-32'd20,32'd100);
-    check_results("BEQ_NEG_OFFSET",32'd80,32'd104,1,0);
+// Zero Offset Branch
+run_test("Zero Offset",0,0,0,1,BEQ,5,5,0,100,100,0,1,0);
 
-    apply_inputs(0,1,0,0,3'b000,0,0,-32'd40,32'd100);
-    check_results("JAL_BACKWARD",32'd60,32'd104,0,1);
+// Signed Extreme
+run_test("BLT Extreme",0,0,0,1,BLT,32'h80000000,32'h7FFFFFFF, 8, 100,108,0,1,0);
 
-    apply_inputs(0,0,1,0,3'b000,32'd101,0,32'd2,32'd100);
-    check_results("JALR_ALIGNMENT",32'd102,32'd104,0,1);
+// Unsigned Extreme
+run_test("BGEU Extreme",0,0,0,1,BGEU, 32'hFFFFFFFF, 32'h00000000, 12, 100, 112,0,1,0);
 
-    apply_inputs(0,0,0,1,BLT,32'h80000000,32'h7FFFFFFF,32'd8,32'd100);
-    check_results("BLT_SIGNED_EXTREME",32'd108,32'd104,1,0);
+// PC Overflow
+run_test("PC Overflow",0,0,0,0,0,0,0,0,32'hFFFFFFFC,32'h00000000,0,0,0);
 
-    apply_inputs(0,0,0,1,BGE,32'h7FFFFFFF,32'h80000000,32'd8,32'd100);
-    check_results("BGE_SIGNED_EXTREME",32'd108,32'd104,1,0);
+// Priority (jump > jalr)
+run_test("Jump Priority",0,1,1,0,0,32'd200,0,20,100,120,104,0,1);
 
-    apply_inputs(0,0,0,1,BLTU,32'h00000000,32'hFFFFFFFF,32'd12,32'd100);
-    check_results("BLTU_EXTREME",32'd112,32'd104,1,0);
+// All Zero
+run_test("All Zero",0,0,0,0,0,0,0,0,0,4,0,0,0);
 
-    apply_inputs(0,0,0,1,BGEU,32'hFFFFFFFF,32'h00000000,32'd12,32'd100);
-    check_results("BGEU_EXTREME",32'd112,32'd104,1,0);
+// BNE Not Taken  
+run_test("BNE Not Taken",0,0,0,1,BNE,10,10,12,100,104,0,0,0);
 
-    apply_inputs(0,0,0,0,3'b000,0,0,0,32'hFFFFFFFC);
-    check_results("PC_OVERFLOW",32'h00000000,32'd104,0,0);
+// BLT Not Taken   
+run_test("BLT Not Taken",0,0,0,1,BLT,20,10,8,100,104,0,0,0);
 
-    apply_inputs(0,0,0,1,BEQ,32'd10,32'd10,32'd0,32'd100);
-    check_results("BEQ_ZERO_OFFSET",32'd100,32'd104,1,0);
+// BGE Not Taken    
+run_test("BGE Not Taken",0,0,0,1,BGE,10,20,8,100,104,0,0,0);
 
-    apply_inputs(0,1,1,0,3'b000,32'd200,0,32'd20,32'd100);
-    check_results("JUMP_JALR_PRIORITY",32'd120,32'd104,0,1);
+// BLTU Not Taken    
+run_test("BLTU Not Taken",0,0,0,1,BLTU,20,10,24,100,104,0,0,0);
 
-    apply_inputs(0,0,0,0,3'b000,0,0,0,0);
-    check_results("ALL_ZERO_INPUTS",32'd4,32'd104,0,0);
+// BGEU Not Taken    
+run_test("BGEU Not Taken",0,0,0,1,BGEU,5,10,24,100,104,0,0,0);
 
-    $display("");    
-    $display("Tests Run : %0d", test_count);
-    $display("Passed    : %0d", pass_count);
-    $display("Failed    : %0d", fail_count);
+// BEQ Max Offset    
+run_test("BEQ Max Offset",0,0,0,1,BEQ,5,5,32'h7FFFFFFC,100,32'h80000060,0,1,0);
 
+// BGE Extreme     
+run_test("BGE Extreme",0,0,0,1,BGE,32'h7FFFFFFF,32'h80000000,8,100,108,0,1,0);
 
-    if(fail_count == 0)
-        $display("ALL TESTS PASSED!");
-    else
-        $display("SOME TESTS FAILED!");
+// BLTU Extreme    
+run_test("BLTU Extreme",0,0,0,1,BLTU,32'h00000000,32'hFFFFFFFF, 12,100,112,0,1,0);
 
-    $finish;
+// Jump and Branch    
+run_test("Jump and Branch",0,1,0,1,BEQ,10,10,16,100,116,0,1,0);
+
+//  JALR and Branch  
+run_test("JALR and Branch",0,0,1,1,BEQ,10,10,16,100,116,0,1,0);
+
+// Reset Priority    
+run_test("Reset Priority",1,1,1,1,BEQ,10,10,16,100,0,0,0,0);
+
+// Invalid func3    
+run_test("Invalid func3",0,0,0,1,3'b010,10,10,16,100,104,0,0,0);
+
+// JAL Zero Offset   
+run_test("JAL Zero Offset",0,1,0,0,0,0,0,0,100,100,104,0,1);
+
+// JALR Negative Offset    
+run_test("JALR Negative Offset",0,0,1,0,0,200,0,-32'd12,100,188,104,0,1);
+
+$display("");
+$display("--------------------------------");
+$display("Tests Passed : %0d / %0d", passed, tests);
+$display("--------------------------------");
+
+if (passed == tests)
+    $display("ALL TESTS PASSED");
+else
+    $display("SOME TESTS FAILED");
+
+$finish;
 
 end
 
