@@ -58,9 +58,17 @@ core_block.imem_block.mem[10] = 32'h00700393;
 core_block.imem_block.mem[11] = 32'h00000013;  // nop (0x2C)
 core_block.imem_block.mem[12] = 32'h00000013;  // nop (0x30)
 core_block.imem_block.mem[13] = 32'h00000013;  // nop (0x34)
-core_block.imem_block.mem[14] = 32'h00000013;  // nop (0x38)
-core_block.imem_block.mem[15] = 32'h00000013;  // nop (0x3C)
-core_block.imem_block.mem[16] = 32'h00000013;  // nop (0x40)
+
+// bne x8, x2, +8
+core_block.imem_block.mem[14] = 32'h00241463;  
+
+//addi x9, x0, 99  (should be skipped)
+core_block.imem_block.mem[15] = 32'h06300493; 
+
+//addi x9, x0, 9 (target)
+core_block.imem_block.mem[16] = 32'h00900493;  
+
+
 core_block.imem_block.mem[17] = 32'h00000013;  // nop (0x44)
 
 // jalr x13, x0, 0x50   
@@ -145,6 +153,10 @@ if(core_block.regfile_block.registers[14] == 14)
     $display("PASS : JALR Jump Target (skip verified)");
 else
     $display("FAIL : JALR Jump Target (skip verified)");
+if (core_block.regfile_block.registers[9] == 32'd9)
+    $display("PASS: BNE instruction");
+else
+    $display("FAIL: BNE instruction");
 end
 endtask
 
