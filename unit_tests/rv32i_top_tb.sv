@@ -62,34 +62,34 @@ core_block.imem_block.mem[11] = 32'h06300393;
 // addi x7,x0,7
 core_block.imem_block.mem[12] = 32'h00700393;
 
-// nop
+// nop (0x34)
 core_block.imem_block.mem[13] = 32'h00000013;
 
-// nop
+// nop (0x38)
 core_block.imem_block.mem[14] = 32'h00000013;
 
-// nop
+// nop (0x3C)
 core_block.imem_block.mem[15] = 32'h00000013;
 
-// bne x8,x2,+8
+// bne x8,x2,+8 (0x40)
 core_block.imem_block.mem[16] = 32'h00241463;
 
-// addi x9,x0,99 (should be skipped)
+// addi x9,x0,99 (0x44)
 core_block.imem_block.mem[17] = 32'h06300493;
 
-// addi x9,x0,9
+// addi x9,x0,9 (0x48)
 core_block.imem_block.mem[18] = 32'h00900493;
 
-// nop
+// nop (0x4C)
 core_block.imem_block.mem[19] = 32'h00000013;
 
-// jalr x13,x0,0x50
-core_block.imem_block.mem[20] = 32'h050006E7;
+// jalr x13,x0,0x58 (0x50)
+core_block.imem_block.mem[20] = 32'h058006E7;
 
-// addi x14,x0,99
+// addi x14,x0,99 (0x54)
 core_block.imem_block.mem[21] = 32'h06300713;
 
-// addi x14,x0,14
+// addi x14,x0,14 (0x58)
 core_block.imem_block.mem[22] = 32'h00E00713;
 
 end
