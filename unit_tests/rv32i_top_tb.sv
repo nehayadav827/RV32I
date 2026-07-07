@@ -54,6 +54,24 @@ core_block.imem_block.mem[9]  = 32'h06300393;
 
 // addi x7,x0,7
 core_block.imem_block.mem[10] = 32'h00700393;
+
+core_block.imem_block.mem[11] = 32'h00000013;  // nop (0x2C)
+core_block.imem_block.mem[12] = 32'h00000013;  // nop (0x30)
+core_block.imem_block.mem[13] = 32'h00000013;  // nop (0x34)
+core_block.imem_block.mem[14] = 32'h00000013;  // nop (0x38)
+core_block.imem_block.mem[15] = 32'h00000013;  // nop (0x3C)
+core_block.imem_block.mem[16] = 32'h00000013;  // nop (0x40)
+core_block.imem_block.mem[17] = 32'h00000013;  // nop (0x44)
+
+// jalr x13, x0, 0x50   
+core_block.imem_block.mem[18] = 32'h050006E7;
+
+// addi x14,x0,99   
+core_block.imem_block.mem[19] = 32'h06300713;
+
+// addi x14,x0,14  
+core_block.imem_block.mem[20] = 32'h00E00713;
+    
 end
 endtask
 
@@ -118,6 +136,15 @@ if(core_block.dmem_block.memory[0] == 15)
 else
     $display("FAIL : Memory");
 
+if(core_block.regfile_block.registers[13] == 32'h4C)
+    $display("PASS : JALR Link Register");
+else
+    $display("FAIL : JALR Link Register");
+
+if(core_block.regfile_block.registers[14] == 14)
+    $display("PASS : JALR Jump Target (skip verified)");
+else
+    $display("FAIL : JALR Jump Target (skip verified)");
 end
 endtask
 
