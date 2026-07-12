@@ -31,4 +31,10 @@ class rv32i_agent extends uvm_agent;
     
   endfunction
   
+  //elab phase
+  virtual function void end_of_elaboration();
+      `uvm_info("agent Class", "elob phase", UVM_MEDIUM)
+    print();
+  endfunction
+  
 endclass
