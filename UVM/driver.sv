@@ -10,4 +10,9 @@ class rv32i_driver extends uvm_driver;
     
   endfunction
   
+  //run phase
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+  
 endclass
