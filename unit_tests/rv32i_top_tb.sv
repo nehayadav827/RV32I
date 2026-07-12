@@ -184,7 +184,85 @@ else
     $display("FAIL: BNE instruction");
 end
 endtask
+    
+//connectivity check
+   task automatic connectivity_check();
 
+begin
+
+    $display("MODULE CONNECTIVITY CHECK");
+
+    @(posedge clk);
+
+    // Instruction Memory
+    if(core_block.instruction == 32'h00500093)
+        $display("PASS : Instruction Memory");
+    else
+        $display("FAIL : Instruction Memory");
+
+    // Decoder
+    if(core_block.opcode == 7'b0010011 &&
+       core_block.rs1_addr == 5'd0 &&
+       core_block.rd_addr  == 5'd1)
+        $display("PASS : Decoder");
+    else
+        $display("FAIL : Decoder");
+
+    // Control Unit
+    if(core_block.RegWrite  == 1'b1 &&
+       core_block.ALUSrc    == 1'b1 &&
+       core_block.MemRead   == 1'b0 &&
+       core_block.MemWrite  == 1'b0 &&
+       core_block.Branch    == 1'b0 &&
+       core_block.Jump      == 1'b0 &&
+       core_block.ALUOp     == 2'b10)
+        $display("PASS : Control Unit");
+    else
+        $display("FAIL : Control Unit");
+
+    // Immediate Generator
+    if(core_block.immediate == 32'd5)
+        $display("PASS : Immediate Generator");
+    else
+        $display("FAIL : Immediate Generator");
+
+    // ALU Control
+    if(core_block.alu_op == 4'b0000)
+        $display("PASS : ALU Control");
+    else
+        $display("FAIL : ALU Control");
+
+    // Register File Read
+    if(core_block.rs1_data == 32'd0)
+        $display("PASS : Register File Read");
+    else
+        $display("FAIL : Register File Read");
+
+    // ALU Input
+    if(core_block.alu_B == 32'd5)
+        $display("PASS : ALU Input");
+    else
+        $display("FAIL : ALU Input");
+
+    // ALU
+    if(core_block.alu_result == 32'd5)
+        $display("PASS : ALU");
+    else
+        $display("FAIL : ALU");
+
+    @(posedge clk);
+
+    // Register File Writeback
+    if(core_block.regfile_block.registers[1] == 32'd5)
+        $display("PASS : Register File Writeback");
+    else
+        $display("FAIL : Register File Writeback");
+
+    $display("MODULE CONNECTIVITY VERIFIED");
+
+end
+
+endtask
 // Bootflow check
     
 task automatic boot_check();
@@ -277,6 +355,7 @@ initial begin
 
 load_program();
 reset();
+connectivity_check();
 boot_ckeck();
 
 repeat(40)
